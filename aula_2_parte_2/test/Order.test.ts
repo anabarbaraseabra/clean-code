@@ -54,6 +54,15 @@ test("Não deve aplicar cupom de desconto expirado", function() {
 test("Deve retornar o valor do frete", function() {
     const cpf = "120.713.896-70";
     const order = new Order(cpf);
+    const dimensions = new ItemDimensions(100, 30, 10, 3)
+    order.addItem(new Item(1, "Musica", "CD", 30, dimensions), 3);
+    const total = order.getShippingPrice();
+    expect(total).toBe(30);
+})
+
+test("Deve retornar o preço mínimo de frete caso ele seja superior ao valor calculado", function() {
+    const cpf = "120.713.896-70";
+    const order = new Order(cpf);
     const dimensions = new ItemDimensions(20, 15, 10, 1)
     order.addItem(new Item(1, "Musica", "CD", 30, dimensions), 3);
     const total = order.getShippingPrice();
