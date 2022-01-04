@@ -1,17 +1,20 @@
 import Coupon from "./Coupon";
 import Cpf from "./Cpf";
+import DefaultFreightCalculator from "./DefaultFreightCalculator";
+import FreghtCalculator from "./FreightCalculator";
 import Item from "./Item";
 import OrderItem from "./OrderItem";
 
 export default class Order {
     cpf: Cpf;
-    orderItems: OrderItem[];
+    private orderItems: OrderItem[];
     coupon: Coupon | undefined;
-    distance = 1000
+    private freight: number
 
-    constructor(cpf: string) {
+    constructor(cpf: string, readonly date: Date = new Date(), readonly freightCalculator: FreghtCalculator = new DefaultFreightCalculator) {
         this.cpf = new Cpf(cpf);
         this.orderItems = []
+        this.freight = 0;
     }
 
     getTotal() {
@@ -19,28 +22,25 @@ export default class Order {
         for(const ordermItem of this.orderItems) {
             total+= ordermItem.getTotal();
         }
-        const dateToCompare = new Date()
-        dateToCompare.setHours(0,0,0,0)
-        if (this.coupon && this.coupon.expiration >= new Date()) {
+        if (this.coupon) {
             total -= total*this.coupon.discount / 100;
         }
         return total;
     }
 
     addItem(item: Item, quantity: number){
+        this.freight += this.freightCalculator.calculate(item.dimensions) * quantity;
         this.orderItems.push(new OrderItem(item.idItem, item.price, quantity, item.dimensions))
     }
 
     addCoupon(coupon: Coupon) {
-        this.coupon = coupon;
+        if(coupon.isValid(this.date)){
+            this.coupon = coupon;
+        }
     }
 
-    getShippingPrice(){
-        let totalShippingPrice = 0
-        for (const orderItem of this.orderItems){
-            totalShippingPrice += this.distance * orderItem.dimensions.getVolume() * (orderItem.dimensions.getDensity()/100);
-        }
-        return totalShippingPrice < 10 ? 10 : totalShippingPrice;
-    }
+    getFreight () {
+		return this.freight;
+	}
 
 }
